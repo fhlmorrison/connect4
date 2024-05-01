@@ -12,6 +12,42 @@ type Game struct {
 	CurrentPlayer Tile
 }
 
+func (g *Game) GetBoard() Board {
+	return g.Board
+}
+
+func (g *Game) Reset() {
+	g.Board.Reset()
+	g.CurrentPlayer = Red
+}
+
+func (g *Game) AddTile(col int, player Tile) (Tile, error) {
+	if player != g.CurrentPlayer {
+		return Empty, fmt.Errorf("not your turn")
+	}
+
+	row, err := g.Board.PlaceTile(col, g.CurrentPlayer)
+
+	if err != nil {
+		return Empty, err
+	}
+
+	// Check for win
+	if g.Board.CheckWin(col, row, player) {
+		return g.CurrentPlayer, nil
+	}
+
+	// Switch player
+	if g.CurrentPlayer == Red {
+		g.CurrentPlayer = Yellow
+	} else if g.CurrentPlayer == Yellow {
+		g.CurrentPlayer = Red
+	}
+
+	// Send new board
+	return Empty, nil
+}
+
 type PlayerSession struct {
 	Player Tile
 	Board  Board
@@ -49,43 +85,33 @@ func main() {
 		playerNum, err := strconv.Atoi(playerString)
 
 		if err != nil {
-			http.Error(w, "Player number invalid", http.StatusBadRequest)
+			http.Error(w, "Player number could not be parsed", http.StatusBadRequest)
 			return
 		}
 
 		if playerNum != int(Red) && playerNum != int(Yellow) {
-			http.Error(w, "Invalid player", http.StatusBadRequest)
+			http.Error(w, "Invalid player number", http.StatusBadRequest)
 		}
 		player := Tile(playerNum)
 
-		if player != gameState.CurrentPlayer {
-			http.Error(w, "Not your turn", http.StatusBadRequest)
-		}
+		// Inputs validated by this point
+		// What follows is all game logic
 
-		row, err := gameState.Board.PlaceTile(col, gameState.CurrentPlayer)
+		winner, err := gameState.AddTile(col, player)
 
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		// Check for win
-		if gameState.Board.CheckWin(col, row, player) {
-			fmt.Printf("Player %d Win", gameState.CurrentPlayer)
-			gameState.Board.Reset()
-			gameState.CurrentPlayer = Red
-			err = templates.ExecuteTemplate(w, "board", gameState)
-			if err != nil {
-				fmt.Println(err)
+		if winner != Empty {
+			if winner == Draw {
+				fmt.Println("Draw")
+			} else {
+				fmt.Printf("Player %d Win", winner)
 			}
-			return
-		}
-
-		// Switch player
-		if gameState.CurrentPlayer == Red {
-			gameState.CurrentPlayer = Yellow
-		} else if gameState.CurrentPlayer == Yellow {
-			gameState.CurrentPlayer = Red
+			// TODO: Send game over message instead of resetting
+			gameState.Reset()
 		}
 
 		// Send new board

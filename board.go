@@ -9,6 +9,7 @@ const (
 	Empty Tile = iota
 	Red
 	Yellow
+	Draw
 )
 
 // Board represents a 7x6 grid of tiles.
@@ -90,6 +91,7 @@ func (b *Board) checkDiagonalWin(column int, row int, tile Tile) bool {
 		}
 	}
 
+	count = 0
 	// Bottom left to top right
 	start = column + row
 	for i := 0; i < len(b); i++ {
@@ -115,11 +117,7 @@ func (b *Board) checkDiagonalWin(column int, row int, tile Tile) bool {
 
 // Check for win given last placed tile
 func (b *Board) CheckWin(column int, row int, tile Tile) bool {
-
 	win := b.checkHorizontalWin(row, tile) || b.checkVerticalWin(column, tile) || b.checkDiagonalWin(column, row, tile)
-	if win {
-		fmt.Println("Win")
-	}
 	return win
 }
 
