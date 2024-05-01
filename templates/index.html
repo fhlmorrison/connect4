@@ -11,7 +11,9 @@
   <body>
     <h1>Home</h1>
     <p>Welcome to the home page!</p>
-    {{template "board" .}}
+    {{template "new-game" .}}
   </body>
 </html>
+{{end}} {{define "new-game"}}
+<button hx-get="/new" hx-swap="outerHTML">New Game</button>
 {{end}}

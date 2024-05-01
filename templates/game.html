@@ -21,7 +21,7 @@
   {{range $index, $_ := .Board}}
   <button
     class="w-8 h-8 p-1 border rounded"
-    hx-post="/add?c={{$index}}&p={{$.CurrentPlayer}}"
+    hx-post="/game/{{$.Id}}/add?c={{$index}}&p={{$.CurrentPlayer}}"
     hx-swap="outerHTML"
     hx-target="#board"
   >
