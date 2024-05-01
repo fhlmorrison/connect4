@@ -150,7 +150,7 @@ func main() {
 
 		gameState := v.(Game)
 
-		err = templates.ExecuteTemplate(w, "board", gameState)
+		err = templates.ExecuteTemplate(w, "game", gameState)
 
 	})
 

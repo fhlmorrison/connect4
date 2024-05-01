@@ -1,6 +1,5 @@
 {{define "board"}}
 <div id="board">
-  <h2>Board</h2>
   {{template "slots" .}}
   <div class="grid grid-cols-7 grid-rows-6 grid-flow-col w-fit">
     {{range .Board}} {{range .}}
@@ -33,4 +32,19 @@
   </button>
   {{end}}
 </div>
+{{end}} {{define "game"}}
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Home</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- htmx -->
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+  </head>
+  <body>
+    <h1>Connect4</h1>
+    {{template "board" .}}
+  </body>
+</html>
 {{end}}
