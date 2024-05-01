@@ -1,0 +1,17 @@
+{{define "index"}}
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Home</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- htmx -->
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+  </head>
+  <body>
+    <h1>Home</h1>
+    <p>Welcome to the home page!</p>
+    {{template "board" .}}
+  </body>
+</html>
+{{end}}
