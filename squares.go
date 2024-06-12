@@ -7,12 +7,16 @@ import (
 	"net/http"
 	"strconv"
 	"sync"
+	"time"
 )
+
+const GameTimeout = 10 * time.Minute
 
 type Game struct {
 	Id            string
 	Board         Board
 	CurrentPlayer Tile
+	LastActivity  time.Time
 }
 
 func (g *Game) GetBoard() Board {
@@ -20,11 +24,15 @@ func (g *Game) GetBoard() Board {
 }
 
 func (g *Game) Reset() {
+	g.LastActivity = time.Now()
 	g.Board.Reset()
 	g.CurrentPlayer = Red
 }
 
 func (g *Game) AddTile(col int, player Tile) (Tile, error) {
+	// Reset the last move time
+	g.LastActivity = time.Now()
+
 	if player != g.CurrentPlayer {
 		return Empty, fmt.Errorf("not your turn")
 	}
@@ -56,6 +64,7 @@ func NewGame(id string) Game {
 		Id:            id,
 		Board:         NewBoard(),
 		CurrentPlayer: Red,
+		LastActivity:  time.Now(),
 	}
 }
 
@@ -98,6 +107,26 @@ func UniqueGameId(games *sync.Map, attempts uint) (string, error) {
 	return uuid, err
 }
 
+func CleanupInactiveGames(games *sync.Map, done chan bool) {
+	for {
+		select {
+		case <-done:
+			return
+		default:
+			// Check for inactive games
+			// If a game has been inactive for 10 minutes, delete it
+			games.Range(func(key, value any) bool {
+				game := value.(Game)
+				if time.Since(game.LastActivity) > GameTimeout {
+					games.Delete(key)
+				}
+				return true
+			})
+			time.Sleep(GameTimeout)
+		}
+	}
+}
+
 func main() {
 	fmt.Println("Initializing server...")
 
@@ -108,11 +137,14 @@ func main() {
 		return
 	}
 
-	// TODO: Figure out how to clean up inactive games
-
 	// Investigate how go handles map size (auto downsizing?)
 
 	var games sync.Map
+
+	// Start a goroutine to clean up inactive games
+	done := make(chan bool)
+	go CleanupInactiveGames(&games, done)
+	defer close(done)
 
 	var mux = http.NewServeMux()
 
