@@ -115,10 +115,22 @@ func (b *Board) checkDiagonalWin(column int, row int, tile Tile) bool {
 	return false
 }
 
-// Check for win given last placed tile
+// Check for win or draw given last placed tile
 func (b *Board) CheckWin(column int, row int, tile Tile) bool {
 	win := b.checkHorizontalWin(row, tile) || b.checkVerticalWin(column, tile) || b.checkDiagonalWin(column, row, tile)
 	return win
+}
+
+func (b *Board) CheckDraw() bool {
+	// Check for draw
+	for _, v := range b {
+		for _, t := range v {
+			if t == Empty {
+				return false
+			}
+		}
+	}
+	return true
 }
 
 func (b *Board) Reset() {

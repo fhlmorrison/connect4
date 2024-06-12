@@ -30,13 +30,15 @@ func (g *Game) Reset() {
 }
 
 func (g *Game) AddTile(col int, player Tile) (Tile, error) {
-	// Reset the last move time
+
+	// Reset the last activity time
 	g.LastActivity = time.Now()
 
 	if player != g.CurrentPlayer {
 		return Empty, fmt.Errorf("not your turn")
 	}
 
+	// Place the tile
 	row, err := g.Board.PlaceTile(col, g.CurrentPlayer)
 
 	if err != nil {
@@ -48,6 +50,11 @@ func (g *Game) AddTile(col int, player Tile) (Tile, error) {
 		return g.CurrentPlayer, nil
 	}
 
+	// Check for draw
+	if g.Board.CheckDraw() {
+		return Draw, nil
+	}
+
 	// Switch player
 	if g.CurrentPlayer == Red {
 		g.CurrentPlayer = Yellow
@@ -55,7 +62,7 @@ func (g *Game) AddTile(col int, player Tile) (Tile, error) {
 		g.CurrentPlayer = Red
 	}
 
-	// Send new board
+	// No winner yet
 	return Empty, nil
 }
 
@@ -137,8 +144,7 @@ func main() {
 		return
 	}
 
-	// Investigate how go handles map size (auto downsizing?)
-
+	// TODO: Investigate how go handles map size (auto downsizing?)
 	var games sync.Map
 
 	// Start a goroutine to clean up inactive games
@@ -146,6 +152,7 @@ func main() {
 	go CleanupInactiveGames(&games, done)
 	defer close(done)
 
+	// Set up the server
 	var mux = http.NewServeMux()
 
 	mux.HandleFunc("/new", func(w http.ResponseWriter, r *http.Request) {
@@ -236,7 +243,7 @@ func main() {
 			if winner == Draw {
 				fmt.Println("Draw")
 			} else {
-				fmt.Printf("Player %d Win", winner)
+				fmt.Printf("Player %d Win\n", winner)
 			}
 			// TODO: Send game over message instead of resetting
 			gameState.Reset()
