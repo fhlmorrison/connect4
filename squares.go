@@ -3,7 +3,6 @@ package main
 import (
 	"crypto/rand"
 	"fmt"
-	"html/template"
 	"net/http"
 	"strconv"
 	"sync"
@@ -134,10 +133,17 @@ func CleanupInactiveGames(games *sync.Map, done chan bool) {
 	}
 }
 
+func loggingMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println(r.Method, r.URL)
+		next.ServeHTTP(w, r)
+	})
+}
+
 func main() {
 	fmt.Println("Initializing server...")
 
-	templates, err := template.ParseFiles("templates/index.html", "templates/game.html")
+	templates, err := loadTemplates()
 
 	if err != nil {
 		fmt.Println(err)
@@ -154,6 +160,9 @@ func main() {
 
 	// Set up the server
 	var mux = http.NewServeMux()
+
+	// Serve static files
+	mux.Handle("/public/", public())
 
 	mux.HandleFunc("/new", func(w http.ResponseWriter, r *http.Request) {
 
@@ -272,6 +281,10 @@ func main() {
 	fmt.Println("Serving at http://localhost:8080/")
 
 	err = http.ListenAndServe(":8080", mux)
+
+	// Add logging middleware
+	// var loggedMux = loggingMiddleware(mux)
+	// err = http.ListenAndServe(":8080", loggedMux)
 
 	if err != nil {
 		fmt.Println(err)
